@@ -1,0 +1,57 @@
+groups:
+- name: alerting_instances_rules
+  rules:
+  - alert: DiskSpace10%Free
+    expr: root_fs_use >= 90
+    labels:
+      severity: critical
+    annotations:
+      summary: "Instance {{ $labels.instance }} is low on disk space"
+      description: "{{ $labels.instance }} has only {{ $value }}% free."
+
+  - alert: DiskSpaceFTP20%Free
+    expr: ftp_fs_use >= 80
+    labels:
+      severity: critical
+    annotations:
+      summary: "Instance {{ $labels.instance }} is low on FTP disk space"
+      description: "FTP {{ $labels.instance }} has only {{ $value }}% free."
+
+- name: alerting_services_rules
+  rules:
+  # Alert for any instance that is unreachable for >1 minutes.
+  - alert: ServiceInstanceDown
+    expr: up == 0
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Service {{ $labels.job }} down"
+      description: "{{ $labels.instance }} of job {{ $labels.job }} has been down for more than 1 minute."
+
+  - alert: NodeSlaveJenkinsDown
+    expr: jenkins_node_offline_value > 1
+    for: 1m
+    labels:
+      severity: pages 
+    annotations:
+      summary: "Slave of {{ $labels.instance }} down"
+      description: "{{ $labels.instance }} of job {{ $labels.job }} has been down for more than 1 minute."
+
+  - alert: KafkaServiceDown
+    expr: up{job="kafka"} == 0
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Service {{ $labels.job }} down"
+      description: "{{ $labels.job }} has been down for more than 1 minute"
+
+- name: recording_rules
+  interval: 5s
+  rules:
+    - record: root_fs_use
+      expr: 100 - 100 * ( node_filesystem_free_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"} )
+
+    - record: ftp_fs_use
+      expr: 100 - 100 * ( node_filesystem_free_bytes{mountpoint="/var/ftp"} / node_filesystem_size_bytes{mountpoint="/var/ftp"} )

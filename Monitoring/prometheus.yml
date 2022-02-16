@@ -1,0 +1,209 @@
+global:
+  scrape_interval: 15s # By default, scrape targets every 15 seconds.
+
+  # Attach these labels to any time series or alerts when communicating with
+  # external systems (federation, remote storage, Alertmanager).
+  external_labels:
+    monitor: 'Jorocmo-monitor'
+
+rule_files:
+    - 'alert.rules.yml'
+
+alerting:
+  alertmanagers:
+  - static_configs:
+    - targets:
+      - 'swarm-wsd:9093'
+
+# A scrape configuration containing exactly one endpoint to scrape:
+# Here it's Prometheus itself.
+scrape_configs:
+  # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
+  - job_name: 'Prometheus'
+    # Override the global default and scrape targets from this job every 5 seconds.
+    scrape_interval: 30s
+    static_configs:
+      - targets: [
+      'swarm-wsd:9090'
+      ]
+    relabel_configs:
+      - replacement: 'wsd'
+        target_label: environment
+
+  - job_name: 'Grafana'
+    # Override the global default and scrape targets from this job every 5 seconds.
+    scrape_interval: 30s
+    static_configs:
+      - targets: [
+      'swarm-wsd:3000'
+      ]
+    relabel_configs:
+      - replacement: 'wsd'
+        target_label: environment
+
+  - job_name: 'Alertmanager'
+    scrape_interval: 30s
+    static_configs:
+      - targets: [
+      'swarm-wsd:19093'
+      ]
+    relabel_configs:
+      - replacement: 'wsd'
+        target_label: environment
+
+  - job_name: 'Node-Exporter'
+    scrape_interval: 15s
+    static_configs:
+      - targets: [
+        '10.0.5.201:9100',
+        '10.0.5.202:9100',
+        '10.0.5.207:9100',
+        '10.0.5.208:9100',
+        '10.0.5.211:9100',
+        '10.0.5.212:9100',
+        '10.0.5.213:9100'
+      ]
+    relabel_configs:
+      - replacement: 'wsd'
+        target_label: environment
+
+  - job_name: 'Docker'
+    scrape_interval: 30s
+    static_configs:
+      - targets: [
+        '10.0.5.201:9323',
+        '10.0.5.211:9323',
+        '110.0.5.212:9323',
+        '110.0.5.213:9323'
+      ]
+    relabel_configs:
+      - replacement: 'wsd'
+        target_label: environment
+
+  - job_name: 'Postgresql'
+    scrape_interval: 30s
+    static_configs:
+      - targets: [
+        '10.0.5.201:9187'
+      ]
+    relabel_configs:
+      - replacement: 'wsd'
+        target_label: environment
+
+  - job_name: 'Nifi'
+    scrape_interval: 30s
+    static_configs:
+      - targets: [
+        '10.0.5.207:9092',
+        '10.0.5.208:9092'
+      ]
+    relabel_configs:
+      - replacement: 'wsd'
+        target_label: environment
+
+  - job_name: 'Discover-services'
+    scrape_interval: 30s
+    metrics_path: /actuator/prometheus
+    scheme: http
+    consul_sd_configs:
+      - server: 'swarm-wsd:8761'
+        datacenter: default
+    relabel_configs:
+      - replacement: 'swarm-wsd:9083'
+        target_label:  __address__
+      - replacement: 'wsd'
+        target_label: environment
+      - source_labels: [ '__meta_consul_service_id' ]
+        action: replace
+        regex: (.*):(.*):(.*)
+        replacement: $2
+        target_label: container_name
+      - source_labels: [ container_name ]
+        target_label: __metrics_path__
+        replacement: '/${1}/actuator/prometheus/'
+
+  - job_name: 'Kafka'
+    scrape_interval: 30s
+    static_configs:
+      - targets: [
+        'swarm-wsd:7071',
+        'swarm-wsd:7072',
+        'swarm-wsd:7073'
+      ]
+    relabel_configs:
+      - replacement: 'wsd'
+        target_label: environment
+
+  - job_name: 'MongoDB'
+    scrape_interval: 30s
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['swarm-wsd:9216']
+    relabel_configs:
+      - replacement: 'wsd'
+        target_label: environment
+
+  - job_name: 'Flink'
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['swarm-wsd.local:9249',
+        'swarm-wsd:9250',
+        'swarm-wsd:9251',
+        'swarm-wsd:9252'
+      ]
+    relabel_configs:
+      - replacement: 'wsd'
+        target_label: environment
+
+  - job_name: 'Logstash'
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['swarm-wsd:9198']
+    relabel_configs:
+      - replacement: 'wsd'
+        target_label: environment
+
+  - job_name: 'Elasticsearch'
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['swarm-wsd:9114',
+        'swarm-wsd:9115',
+        'swarm-wsd:9116',
+        'swarm-wsd:9117'
+      ]
+    relabel_configs:
+      - replacement: 'wsd'
+        target_label: environment
+
+  - job_name: 'Zookeeper'
+    static_configs:
+    - targets: ['swarm-wsd:9141']
+    relabel_configs:
+      - replacement: 'wsd'
+        target_label: environment
+
+  - job_name: "cadvisor"
+#    dns_sd_configs:
+#     - names: ['tasks.cadvisor']
+#       type: 'A'
+#       port: 18888
+    scrape_interval: 30s
+    static_configs:
+      - targets: [
+        '10.0.5.211:18888',
+        '10.0.5.212:18888',
+        '10.0.5.213:18888'
+      ]
+
+    relabel_configs:
+      - replacement: 'wsd'
+        target_label: environment
+
+  - job_name: 'prometheus-logstash_exporter-qa'
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['swarm-wsd:9304']
+    relabel_configs:
+      - replacement: 'wsd'
+        target_label: environment
+

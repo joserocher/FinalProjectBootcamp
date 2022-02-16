@@ -1,0 +1,28 @@
+version: '3.7'
+services:
+  grafana:
+    image: grafana/grafana:7.3.3
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=XXXXXXXXXXXXXX
+      - GF_RENDERING_SERVER_URL=http://renderer:8081/render
+      - GF_RENDERING_CALLBACK_URL=http://grafana:3000/
+      - GF_LOG_FILTERS=rendering:debug
+    volumes:
+      - ./grafana/data:/var/lib/grafana
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./grafana/public/img:/usr/share/grafana/public/img
+      - ./grafana/public/build:/usr/share/grafana/public/build
+      - ./grafana/public/views:/usr/share/grafana/public/views
+    ports:
+      - 3000:3000
+    networks:
+      - public
+    deploy:
+      resources:
+        limits:
+          memory: 3096MB
+
+networks:
+  public:
+    external: true
