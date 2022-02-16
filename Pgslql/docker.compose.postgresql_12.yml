@@ -4,7 +4,7 @@ services:
   postgresql_12:
     image: postgres:12.8-alpine
     healthcheck:
-      test: psql postgres --command "select 1" -U jorocmo
+      test: psql postgres --command "select 1" -U <user>
     stop_grace_period: 120s
     ports:
       - "5432:5432"
